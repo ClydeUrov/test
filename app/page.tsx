@@ -19,7 +19,7 @@ export default function Home() {
 
     const concurrencyNumber = concurrency;
     const requestsPerSecond = concurrencyNumber;
-    const totalRequests = 1000;
+    const totalRequests = 200;
     const delayBetweenRequests = 1000 / requestsPerSecond;
     const requestQueue: number[] = [];
     let activeRequests = 0;

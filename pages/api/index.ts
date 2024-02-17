@@ -8,14 +8,6 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
 
   requestCount++;
 
-  if (requestCount > 50) {
-    res.status(429).json({ error: `Too many requests: ${requestCount}` });
-    if(index === 1000) {
-      requestCount = 0
-    }
-    return;
-  }
-
   const delay = Math.floor(Math.random() * 1000) + 1;
 
   if (lastRequestTime !== 0) {
@@ -35,10 +27,14 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
 
   if(requestCount > 50) {
     res.status(429).json({ error: `Too many requests: ${requestCount}` });
+    if(index === 1000) {
+      requestCount = 0
+    }
     return;
   } else {
-    res.json({
-      index: index
-    });
+    res.json({index: index});
+    if(index === 1000) {
+      requestCount = 0
+    }
   }
 };
