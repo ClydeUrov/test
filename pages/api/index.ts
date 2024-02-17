@@ -1,40 +1,28 @@
 import { NextApiRequest, NextApiResponse } from "next";
 
-let requestCount = 0;
-let lastRequestTime = 0;
+let requestsInCurrentSecond = 0;
+const maxRequestsPerSecond = 50;
+let lastSecondTimestamp = Math.floor(Date.now() / 1000);
 
 export default async (req: NextApiRequest, res: NextApiResponse) => {
-  const index = parseInt(req.query.index as string);
+    const index = parseInt(req.query.index as string);
 
-  requestCount++;
-
-  const delay = Math.floor(Math.random() * 1000) + 1;
-
-  if (lastRequestTime !== 0) {
-    const timeDifference = Date.now() - lastRequestTime;
-    const timeToWait = 1000 / 50 - timeDifference;
-
-    if (timeToWait > 0) {
-      await new Promise((resolve) => setTimeout(resolve, timeToWait));
+    const currentSecondTimestamp = Math.floor(Date.now() / 1000);
+    if (currentSecondTimestamp > lastSecondTimestamp) {
+        lastSecondTimestamp = currentSecondTimestamp;
+        requestsInCurrentSecond = 0;
     }
-  }
 
-  lastRequestTime = Date.now();
-
-  setTimeout(() => {
-    requestCount--;
-  }, delay);
-
-  if(requestCount > 50) {
-    res.status(429).json({ error: `Too many requests: ${requestCount}` });
-    if(index === 1000) {
-      requestCount = 0
+    if (requestsInCurrentSecond >= maxRequestsPerSecond) {
+        return res.status(429).json({ error: `Too many requests in one second` });
     }
-    return;
-  } else {
-    res.json({index: index});
-    if(index === 1000) {
-      requestCount = 0
-    }
-  }
+
+    requestsInCurrentSecond++;
+
+    const delay = Math.floor(Math.random() * 1000) + 1;
+
+    setTimeout(() => {
+      console.log(requestsInCurrentSecond, delay);
+      res.json({ index: index });
+    }, delay);
 };

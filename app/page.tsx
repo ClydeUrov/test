@@ -19,7 +19,7 @@ export default function Home() {
 
     const concurrencyNumber = concurrency;
     const requestsPerSecond = concurrencyNumber;
-    const totalRequests = 200;
+    const totalRequests = 1000;
     const delayBetweenRequests = 1000 / requestsPerSecond;
     const requestQueue: number[] = [];
     let activeRequests = 0;
@@ -40,6 +40,7 @@ export default function Home() {
         setResults(prevResults => [...prevResults, `Request ${requestIndex}: ${errorData.error}`]);
       } else {
         const data = await response.json();
+        console.log(data);
         setResults(prevResults => [...prevResults, `Request ${requestIndex}: ${data.index}`]);
       }
 
