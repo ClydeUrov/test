@@ -1,95 +1,92 @@
-import Image from "next/image";
+"use client";
+
 import styles from "./page.module.css";
+import { useState } from "react";
 
 export default function Home() {
+  const [concurrency, setConcurrency] = useState<number>(0);
+  const [isStarted, setIsStarted] = useState<boolean>(false);
+  const [results, setResults] = useState<string[]>([]);
+
+  const startButtonHandler = async () => {
+    setIsStarted(true);
+    if (results.length) {setResults([]);}
+    if (concurrency === 0) {
+      alert('Value cannot be 0');
+      setIsStarted(false);
+      return;
+    }
+
+    const concurrencyNumber = concurrency;
+    const requestsPerSecond = concurrencyNumber;
+    const totalRequests = 1000;
+    const delayBetweenRequests = 1000 / requestsPerSecond;
+    const requestQueue: number[] = [];
+    let activeRequests = 0;
+
+    for (let i = 1; i <= totalRequests; i++) {
+      requestQueue.push(i);
+    }
+
+    async function sendRequest() {
+      if (requestQueue.length === 0) {
+        return;
+      }
+
+      const requestIndex = requestQueue.shift()!;
+      const response = await fetch(`/api?index=${requestIndex}`);
+      if (response.status === 429) {
+        const errorData = await response.json();
+        setResults(prevResults => [...prevResults, `Request ${requestIndex}: ${errorData.error}`]);
+      } else {
+        const data = await response.json();
+        setResults(prevResults => [...prevResults, `Request ${requestIndex}: ${data.index}`]);
+      }
+
+      setTimeout(sendRequest, delayBetweenRequests);
+    }
+
+    function processQueue() {
+      while (activeRequests < concurrencyNumber && requestQueue.length > 0) {
+        sendRequest();
+        activeRequests++;
+      }
+    }
+
+    processQueue();
+
+    setTimeout(() => {
+      setIsStarted(false);
+    }, totalRequests * delayBetweenRequests);
+  };
+
   return (
-    <main className={styles.main}>
-      <div className={styles.description}>
-        <p>
-          Get started by editing&nbsp;
-          <code className={styles.code}>app/page.tsx</code>
-        </p>
-        <div>
-          <a
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className={styles.vercelLogo}
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
-      </div>
-
-      <div className={styles.center}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
+      <h1>Test Task</h1>
+      <label>
+        Concurrency:
+        <input
+          type="number"
+          min="0"
+          max="100"
+          style={{padding: "5px", borderRadius: "20px", marginInline: "10px"}}
+          value={concurrency}
+          onChange={(e) => {
+            const newValue = parseInt(e.target.value);
+            if (!isNaN(newValue) && newValue >= 1 && newValue <= 100) {
+              setConcurrency(newValue);
+            }
+          }}
         />
-      </div>
-
-      <div className={styles.grid}>
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Docs <span>-&gt;</span>
-          </h2>
-          <p>Find in-depth information about Next.js features and API.</p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Learn <span>-&gt;</span>
-          </h2>
-          <p>Learn about Next.js in an interactive course with&nbsp;quizzes!</p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Templates <span>-&gt;</span>
-          </h2>
-          <p>Explore starter templates for Next.js.</p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Deploy <span>-&gt;</span>
-          </h2>
-          <p>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
+      </label>
+      <button onClick={startButtonHandler} disabled={isStarted} style={{padding: "5px"}}>
+        Start
+      </button>
+      <ul>
+        {results.map((result, index) => (
+          <li key={index}>{result}</li>
+        ))}
+      </ul>
+    </div>
   );
 }
