@@ -14,15 +14,14 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     }
 
     if (requestsInCurrentSecond >= maxRequestsPerSecond) {
-        return res.status(429).json({ error: `Too many requests in one second` });
+        res.status(429).json({ error: `Too many requests in one second` });
+        return;
     }
 
-    requestsInCurrentSecond++;
-
-    const delay = Math.floor(Math.random() * 1000) + 1;
+    const delay = Math.floor(Math.random() * 10) + 1;
 
     setTimeout(() => {
-      console.log(requestsInCurrentSecond, delay);
+      requestsInCurrentSecond++;
       res.json({ index: index });
     }, delay);
 };
